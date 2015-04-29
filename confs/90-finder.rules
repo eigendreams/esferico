@@ -1,0 +1,8 @@
+ACTION=="add", ATTRS{idVendor}=="2341", ATTRS{idProduct}=="0001", ATTRS{serial}=="64935343133351315232", SYMLINK+="traction_arduino"
+ACTION=="add", ATTRS{idVendor}=="2341", ATTRS{idProduct}=="0043", ATTRS{serial}=="85231363136351216131", SYMLINK+="talon_arduino"
+ACTION=="add", KERNEL=="ttyACM[0-9]*" ATTRS{idVendor}=="2341", ATTRS{idProduct}=="8036", ATTRS{manufacturer}=="Arduino LLC" SYMLINK+="arm_arduino"
+ACTION=="add", ATTRS{idVendor}=="2341", ATTRS{idProduct}=="0043", ATTRS{serial}=="85231363136351312100", SYMLINK+="sensor_arduino"
+ACTION=="add", ATTRS{idVendor}=="2341", ATTRS{idProduct}=="0001", ATTRS{serial}=="64934333235351E02262", SYMLINK+="ir_arduino"
+ACTION=="add", KERNEL=="ttyACM[0-9]*", ATTRS{idVendor}=="15d1", ATTRS{idProduct}=="0000", SYMLINK+="hokuyo"
+
+

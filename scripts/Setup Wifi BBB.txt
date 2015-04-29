@@ -1,0 +1,30 @@
+Connect the BBB to internet, modify /etc/network/interfaces to:
+
+	...
+
+	#auto wlan0
+	#allow-hotplug wlan0
+	#iface wlan0 inet dhcp
+	#wpa-driver wext
+	#wpa-ssid ...
+	#wpa-ap-scan 1
+	#wpa-proto RSN
+	#wpa-pairwise CCMP
+	#wpa-group CCMP
+	#wpa-key-mgmt WPA-PSK
+	#wpa-psk ...
+
+	auto wlan1
+	allow-hotplug wlan1
+	iface wlan1 inet static
+	address 192.168.13.29
+	netmask 255.255.255.0
+	gateway 192.168.13.254
+	dns-nameservers 132.248.10.2
+	wireless-essid Robotik
+	wireless-key 83C359C27A
+	#wireless-mode managed
+
+	...
+
+Comment and uncomment the sections depending on wich network you want to use

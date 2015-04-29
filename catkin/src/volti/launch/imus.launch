@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+
+<launch>
+
+  <node pkg="volti" type="imu_plate" name="imu_plate" respawn="true">
+  </node>
+  
+  <node pkg="volti" type="imu_pendu" name="imu_pendu" respawn="true">
+  </node>
+
+</launch>

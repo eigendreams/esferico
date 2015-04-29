@@ -1,0 +1,29 @@
+launchers lanzados por test_slam.launch:
+
+	geotiff_mapper_test.launch:
+
+	    hector_trajectory_server
+	    hector_geotiff_server
+
+	hokuyo_test.launch:
+
+    	hokuyo_node
+
+    mapping_default_test.launch:
+    
+	    map_2_odom
+	    odom_2_base_footprint
+	    base_footprint_2_base_link
+	    base_link_2_base_stabilized_link
+	    base_stablized_2_base_frame
+	    base_frame_2_laser_link
+	    base_2_nav_link
+	    hector_mapping
+
+	object_tracker_test.launch:
+
+    	object_tracker
+
+    qrcode_detection_test.launch:
+
+    	qrcode_test

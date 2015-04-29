@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<package>
+  <name>volti</name>
+  <version>0.0.1</version>
+  <description>The volti package provides some basic tools for the volti robot</description>
+  <maintainer email="jakob.culebro@gmail.com">jakob</maintainer>
+  <license>BSD</license>
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>message_generation</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>rospy</build_depend>
+  <build_depend>std_msgs</build_depend>
+  <build_depend>tf</build_depend>
+  <build_depend>joy</build_depend>
+  <build_depend>volti_msgs</build_depend>
+  <build_depend>dynamic_reconfigure</build_depend>
+  <run_depend>message_runtime</run_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>rospy</run_depend>
+  <run_depend>std_msgs</run_depend>
+  <run_depend>tf</run_depend>
+  <run_depend>joy</run_depend>
+  <run_depend>volti_msgs</run_depend>
+</package>

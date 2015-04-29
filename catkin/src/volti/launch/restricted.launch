@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+
+<launch>
+
+  <node pkg="volti" type="imu_node" name="imu_node" respawn="true">
+  </node>
+
+  <node pkg="volti" type="push_servos.py" name="push_servos" respawn="true">
+  </node>
+
+  <node pkg="volti" type="readencs.py" name="readencs" respawn="true">
+  </node>
+
+</launch>

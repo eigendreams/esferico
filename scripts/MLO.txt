@@ -1,0 +1,54 @@
+Para evitar tener que presionar siempre el boton de boot, podemos editar el archivo MLO del sistema residente en la memoria flash. Aunque, en las ultimas versiones podria ser que baste con iniciar el Debian desde la memoria flash, y usar sudo find para encontrar el archivo MLO y renombrarlo, desde Debian.
+
+http://www.twam.info/hardware/beaglebone-black/u-boot-on-beaglebone-black
+
+--- Bootear la BBB desde la uSd con la revisión C Debian
+    
+        Bootear con una imagen de Ubuntu, en la uSD, usando el boton de booteo, y acceder por ssh al sistema
+
+	    ssh ubuntu@192.168.7.2
+            password: temppwd
+
+        Ver la tabla de particiones:
+
+            sudo lsblk -o NAME,FSTYPE,SIZE,MOUNTPOINT,LABEL
+
+        Montar la particion vfat de 4G
+        
+            sudo mkdir /mnt/vfat
+            sudo mount -t auto -v /dev/mmcblk1p1 /mnt/vfat
+
+        Rename MLO file en /mnt/vfat
+
+            cd /mnt/vfat
+            sudo mv MLO bakMLO
+
+        Reiniciar
+
+            sudo reboot
+
+        *Para deshacer montaje y MLO:
+
+            sudo umount /dev/mmcblk1p1
+            sudo mv bakMLO MLO
+
+--- Revisando integridad por hash SHA1 o MD5
+
+        sha1sum *
+        md5sum *
+
+--- Instalando cosas (nodejs?), esta mejor en script bbboncesetup.sh
+
+        Ver http://thethingsystem.com/dev/Bootstrapping-the-BeagleBone-Black-with-Debian.html
+        Ver* http://shrkey.com/installing-node-version-manager-and-node-js-on-beaglebone-black/
+        Ver http://dotnetdavid.wordpress.com/2013/09/16/beaglebone-black-cloud9-and-bonescript-install-guide/
+        Ver http://www.samclarke.com/2012/07/how-to-install-cloud-9-ide-on-ubuntu-12-04-lts-precise-pangolin/
+
+        sudo apt-get install git-core build-essential
+        git clone https://github.com/joyent/node.git
+        cd node
+        git checkout v0.10.22 -b v0.10.22
+        ./configure --without-snapshot
+        # Esto tomará como cuatro horas...
+        make
+

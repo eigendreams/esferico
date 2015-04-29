@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+
+<launch>
+    <!-- joy node -->
+    <node respawn="true" pkg="joy" type="joy_node" name="joy" >
+        <param name="dev" type="string" value="/dev/input/js0" />
+        <param name="deadzone" value="0.15" />
+        <param name="autorepeat_rate" value="5" />
+        <param name="coalesce_interval" value="0.1" />
+    </node>
+
+    <node pkg="volti" type="control_modal.py" name="control_modal" respawn="true">
+    </node>
+</launch>

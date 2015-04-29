@@ -1,0 +1,35 @@
+<?xml version="1.0"?>
+
+<launch>
+
+	<!-- machine tags -->
+	<machine name="c1_opt" address="arm" env-loader="/opt/ros/indigo/env.sh" user="ubuntu" password="temppwd"/>
+	<machine name="c1_src" address="arm" env-loader="/home/ubuntu/workspace/catkin/devel/env.sh" user="ubuntu" password="temppwd" default="true"/>
+	<machine name="c2_opt" address="jakob-think" env-loader="/opt/ros/indigo/env.sh"/>
+	<machine name="c2_src" address="jakob-think" env-loader="/home/jakob/workspace/catkin/devel/env.sh"/>
+
+    <node machine="c1_src" pkg="volti" type="imu_node" name="imu_node" respawn="true" launch-prefix="sudo -i">
+    </node>
+    
+    <!--<node machine="c1_src" pkg="volti" type="control.py" name="control" respawn="true" launch-prefix="sudo -i">
+    </node>-->
+    
+    <node machine="c1_src" pkg="volti" type="push_servos.py" name="push_servos" respawn="true" launch-prefix="sudo -i">
+    </node>
+    
+    <node machine="c1_src" pkg="volti" type="readencs.py" name="readencs" respawn="true" launch-prefix="sudo -i">
+    </node>
+
+     <!-- joy node -->
+    <node machine="c2_opt" respawn="true" pkg="joy" type="joy_node" name="joy" >
+        <param name="dev" type="string" value="/dev/input/js0" />
+        <param name="deadzone" value="0.15" />
+        <param name="autorepeat_rate" value="5" />
+        <param name="coalesce_interval" value="0.01" />
+    </node>
+
+    <node machine="c2_src" pkg="volti" type="control_modal.py" name="control_modal" respawn="true">
+    </node>
+	 
+	 
+</launch>

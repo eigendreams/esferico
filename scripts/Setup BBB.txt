@@ -1,0 +1,492 @@
+So, this was quite a bit more lengthy than I hoped. Nevertheless, I think this is worth sharing. I made all this with my old trusty netbook and the BBB connected via HDMI to an external monitor (theoretically, you could create a script to set up everything for you, but I don't know how to do that... yet), and coupled with its own keyboard and mouse the first time, then I realized I could have used SSH from the very beginning (how dull of me), controlling the BBB with my computer. You will also need a fast micro sd card, 4 GB at the very least (and 32 GB at most, I strongly recommend at least 8 gb, class 10) to set up Ubuntu ARM. To install things, an internet connection is required. You could use an Ethernet cable, but personally I had access to a USB-Stick Wireless Network Adapter by CISCO/Linksys that worked right away.
+
+In short, make sure you have the following:
+
+	If you are going to use SSH:
+
+		4 GB (or more, I recommend 8gb class 10) SD card (and the sd card reader for the imaging in your PC with Ubuntu)
+		Ethernet Cable (or Wifi USB adapter) and internet connection
+		Plenty of time and patience (time being the most important, I warn you)
+
+	If you want graphical output from the BBB, to control it "directly", add:
+
+		Micro HDMI cable (and the HDMI Monitor or TV, of course)
+		USB Hub (connected to the BBB)
+		Keyboard (in the hub)
+		Mouse (If you wish to use the graphical environment right away. I used a wireless one without problem, connect it to the hub)
+
+So, lets begin with this. There is an alternative way to install ROS, using Angstrom, covered by Victor Mayoral Vilches (don't know him), on his blog: http://beagleros.wordpress.com/ . I have not tried it, but will do sometime.
+
+1.- Prepare the sd card for imaging
+
+	Modified from http://elinux.org/BeagleBoardUbuntu
+
+	Using: "Method 1: Download a Complete Pre-Configured Image", download a premade image of Quantal 13.04 armhf. 13.04 being important, as it is the latest Ubuntu version supported by ROS.
+
+	Be careful when imaging the card, you must be absolutely sure that the sdX you are using is the RIGHT one (or risk trashing your computer data). Position yourself via the terminal inside the folder of the extracted premade image and enter:
+
+		sudo ./setup_sdcard.sh --probe-mmc
+		
+	This showed me that my sd card was in sdb, then, I used:
+
+		sudo ./setup_sdcard.sh --mmc /dev/sdb --uboot bone
+
+	When finished, just put the SD card in the slot of the BBB, and power it on with the USB Cable and your PC. The default user is ubuntu and the pass is temppwd.
+
+2.- Configure SSH
+
+	If for some reason you need special configuration, do:
+
+	On the BBB, enter in the terminal or command line:
+
+		sudo nano /etc/ssh/sshd_config
+
+	And follow the instructions of the Configuration section of https://help.ubuntu.com/13.04/serverguide/openssh-server.html but LEAVE the port as 22. Then do:
+
+		sudo /etc/init.d/ssh restart
+
+	If you do not need special configuration, just do:
+
+	On your PC, go to http://beagleboard.org/Getting%20Started and look for mkudevrule.sh . Download it, make the file executable and run it with sudo. See http://askubuntu.com/questions/77929/how-to-run-a-script if needed, and then reboot.
+
+	Make sure you are connected to the network created by the BBB via the USB cable, in my case, it's named "Wired connection 2" and appears as an Ethernet Network (Circuitco BeagleBoneBlack). You could set up the network manually if needed, like in http://tellthemuserstories.wordpress.com/2013/05/11/remote-desktop-connection-to-a-raspberry-pi/ but I found it unnecessary (also, don't follow the instructions in that link, it's for the RaspberryPi and Fedora).
+
+	If succesful, you should be able to do:
+
+		ping 192.168.7.1
+		ping 192.168.7.2
+
+	And get a response from the BBB. On your PC, update the /etc/hosts (sudo nano bla bla bla) file, adding the line:
+
+		192.168.7.2 arm
+
+	to the list of known hosts. You should have the SSH server and client installed already, if in doubt, see https://help.ubuntu.com/13.04/serverguide/openssh-server.html . Thus, you could now do:
+
+		ping arm
+
+	On your PC (you may need to reboot it again, I don't really remember), enter in a terminal:
+
+		sudo ufw allow 22
+		ssh ubuntu@arm
+
+	I'm not sure if the first line is really neccesary, seen in http://askubuntu.com/questions/51925/how-do-i-configure-a-new-ubuntu-installation-to-accept-ssh-connections .
+
+	Then enter the pass temppwd, and you will be connected via SSH to the BBB, via the USB cable. If worried about security, see https://help.ubuntu.com/community/SSH/OpenSSH/Configuring .
+
+3.- Configure the wifi adapter (if not using ethernet)
+
+	If you don't mind, you can connect to the BBB via SSH right away, and do everything on your computer, see step 1 if you need to configure the SSH connection from the BBB itself. I suggest using SSH so you don't have to bother with HDMI, keyboard, etc. You need to set up the hosts file on your computer so it includes the BBB ip and name key-value pair, and "install" the driver script from the BBB webpage.
+
+	The BBB will ask you for a login, enter ubuntu (the user) and the the password temppwd. You are now at ubuntu@arm. In the section named "Ubuntu Software" at http://elinux.org/BeagleBoardUbuntu there is an example of the interface configuration file (see http://ubuntuforums.org/showthread.php?t=202834 for more detail). I used:
+
+		sudo nano /etc/network/interfaces
+
+	In my case, I had a WPA-2 public ssid AES encrypted personal DHCP network, thus after the Wifi Example comments I entered:
+
+		auto wlan0
+		iface wlan0 inet dhcp
+		wpa-driver wext
+		wpa-ssid my_ssid
+		wpa-ap-scan 1
+		wpa-proto RSN
+		wpa-pairwise CCMP
+		wpa-group CCMP
+		wpa-key-mgmt WPA-PSK
+		wpa-psk my_pass
+
+	Again, see http://ubuntuforums.org/showthread.php?t=202834 for more details. Replace my_ssid with the ssid of your wireless network. To get the pass phrase, exit nano (saving changes) and enter in the terminal:
+
+		wpa_passphrase your_essid your_ascii_key
+
+	Lets say (as an example) that I used:
+
+		wpa_passphrase INFINITUM1234 1234567890
+
+	Write down (if not using SSH, sorry for that... but you could just use SSH, or Ethernet you know, or finish this later with a GUI) the long string of letters and numbers generated after psk, and update the wpa-psk line in /etc/network/interfaces with the string. Finally, reboot:
+
+		sudo reboot
+
+4.- Configure the keyboard layout (if yours is not US standard and you are using the BBB "directly" without SSH)
+
+	I used a Spanish (Spain) keyboard. To configure it, follow the instructions at http://askubuntu.com/questions/155424/changing-keyboard-layout-in-ubuntu-12-04-server-command-line-interface
+
+		sudo apt-get update
+		sudo apt-get install console-data
+
+	Hit enter when showed "Configuring console-data", and then use:
+
+		sudo dpkg-reconfigure keyboard-configuration
+
+	Select an appropriate keyboard and the desired language. Leave other options unchanged.
+
+5.- Start the Graphical Environment (if so you wish)
+
+	Same user as ubuntu and pass as temppwd. 
+	
+	If you want Lubuntu (the core part, install apps later), you will need an 8gb card or bigger, use:
+
+		sudo apt-get update
+		sudo apt-get install lubuntu-core
+		
+	For lxde, refer to http://elinux.org/BeagleBoardUbuntu under the subsection "Raring 13.04 armhf". Position yourself inside /boot/uboot/tools/ubuntu/ (not really really needed) and run the script small-lxde-desktop.sh with sudo:
+
+		cd /boot/uboot/tools/ubuntu/
+		sudo ./small-lxde-desktop.sh
+
+	Will take a while, around 30 minutes for me. Then reboot. Use again ubuntu as user and temppwd as password. For some reason the mouse will be "hidden" even thought it's still there. You can access a terminal in Start/System_Tools/XTerm
+
+	This will take 1-2 hours to finish in either case.
+
+6.- Configure TightVNC
+
+	I used Vinagre (Remote Desktop Viewer) on my laptop with Ubuntu 13.04. I installed it via the software center.
+
+	We will use a variation of http://linuxpluse.wordpress.com/2013/01/13/remote-server-access-lxde-vnc/ . On the BBB (either directly on it or via SSH, I prefer SSH), enter in a terminal or command line:
+
+		sudo apt-get update
+		sudo apt-get install aptitude
+		sudo aptitude install tightvncserver
+		tightvncserver :1
+
+	I (maybe foolishly, but whatever) put temppwd as the password for VNC too. Do not create a view-only password. Then, on the BBB:
+
+		tightvncserver -kill :1
+		nano ~/.vnc/xstartup
+
+	And add this line at the end of the file if using small LXDE:
+
+		lxterminal & /usr/bin/lxsession -s LXDE &
+
+	If using Lubuntu, erase the line /etc/X11/Xsession, and add:
+
+		/usr/bin/startlubuntu &
+
+	Again, on the BBB:
+
+		tightvncserver :1
+	
+	Start the remote desktop viewer, and connect via VNC to 192.168.7.2:1, enter the pass temppwd, and you will get the remote desktop. You can change the resolution, on the BBB:
+
+		tightvncserver -kill :1
+		tightvncserver :1 -geometry 800x600 -depth 16 -pixelformat rgb565:
+
+	And connect again with Remote Desktop Viewer. That's all for the basics. As you may see, the theme does not behaves well right now, don't know how to fix it, but it seems perfectly usable, if bare bones. Personally, I think that you should use the VNC as a last resort, as it's heavy and resource consuming. Kill the server when finished:
+
+		tightvncserver -kill :1
+
+	To run the VNC at the BBB startup with small LXDE, do on the BBB:
+
+		sudo nano /etc/init.d/tightvncserver
+
+	And copy and paste (taken from http://linuxpluse.wordpress.com/2013/01/13/remote-server-access-lxde-vnc/ ):
+
+		#!/bin/sh
+		### BEGIN INIT INFO
+		# Provides: tightvncserver
+		# Required-Start: $local_fs
+		# Required-Stop: $local_fs
+		# Default-Start: 2 3 4 5
+		# Default-Stop: 0 1 6
+		# Short-Description: Start/stop tightvncserver
+		### END INIT INFO# More details see:
+		# http://www.penguintutor.com/linux/tightvnc### Customize this entry
+		# Set the USER variable to the name of the user to start tightvncserver under
+		export USER='root'
+		### End customization requiredeval cd ~$USERcase "$1" in
+		start)
+		su $USER -c '/usr/bin/tightvncserver :1'
+		echo "Starting TightVNC server for $USER "
+		;;
+		stop)
+		pkill Xtightvnc
+		echo "Tightvncserver stopped"
+		;;
+		*)
+		echo "Usage: /etc/init.d/tightvncserver {start|stop}"
+		exit 1
+		;;
+		esac
+		exit 0
+
+	Remember to change the USER key value (export USER='root'). I have not tested any of this, so be careful. If this is done wrong, you may need to erase /etc/init.d/tightvncserver via SSH or directly from the card using your PC. Then run on the BBB:
+
+		sudo chmod 775 /etc/init.d/tighvncserver
+		sudo update-rc.d tightvncserver defaults
+
+	And finally reboot. Again, a word of caution, as I have not tested this myself and if done wrong may be tedious to fix.
+
+7.- Additionals
+
+	The BBB can be accessed via SSH without HDMI output right away. If LXDE was installed, it's convenient to be able to select whether or not the GUI is automatically started.
+
+	To disable the slim login "thing" in LXDE (do it anyway, really), enter in the BBB:
+
+		sudo update-rc.d -f slim remove
+
+	And reboot (seen in http://www.unixtutorial.org/2009/01/disable-service-startup-in-ubuntu/ ). You can re enable it (in the BBB, via SSH) if you wish, by doing:
+
+		sudo update-rc.d slim defaults
+
+	This way, you can stop using the HDMI output, and start the SSH session from your PC directly. If you were to use the HDMI output, you would see a simple command line. You can use SSH either way.
+
+	To start the VNC session, simple enter via SSH:
+
+		tightvncserver :1 -geometry 800x600 -depth 16 -pixelformat rgb565:
+
+	And then connect via the Remote Desktop Viewer. Finish the VNC session in the RDV, and then use via SSH:
+
+		tightvncserver -kill :1
+
+	You can monitor resource usage in the BBB via SSH with:
+
+		sudo ps aux
+
+	The LXDE session for VNC consumes around 7% of RAM space while idle.
+
+8.- Installing ROS
+
+	We will install from source, as in http://www.ros.org/wiki/hydro/Installation/Source , but with some modifications to the process. This WILL take a lot of time, at least 4-5 hours, if not more.
+
+	On the BBB (I used SSH), enter:
+	
+		sudo update-locale LANG=C LANGUAGE=C LC_ALL=C LC_MESSAGES=POSIX
+		sudo sh -c 'echo "deb http://packages.ros.org/ahendrix-mirror/ubuntu raring main" > /etc/apt/sources.list.d/ros-latest.list'
+		wget http://packages.ros.org/ros.key -O - | sudo apt-key add -
+		sudo apt-get update
+
+	Then, on the BBB:
+
+		sudo apt-get install python-rosdep python-rosinstall-generator python-wstool build-essential
+		sudo rosdep init
+		rosdep update
+
+	Then, on the BBB (note that the last line is different from the ROS wiki version):
+
+		mkdir ~/ros_catkin_ws
+		cd ~/ros_catkin_ws
+		rosinstall_generator ros_comm --rosdistro hydro --deps --wet-only > hydro-ros_comm-wet.rosinstall
+		wstool init -j1 src hydro-ros_comm-wet.rosinstall
+
+	To resolve dependencies, use:
+
+		rosdep install --from-paths src --ignore-src --rosdistro hydro -y
+
+	After around 1 hour, an error will occur, install sbcl-source and sbcl-doc, then retry 2 times.
+
+		sudo apt-get install sbcl-source sbcl-doc
+		rosdep install --from-paths src --ignore-src --rosdistro hydro -y
+		rosdep install --from-paths src --ignore-src --rosdistro hydro -y
+
+	Install liblog4cxx10 (if dependencies were resolved correctly, this is unneeded):
+
+		sudo apt-get install liblog4cxx10 liblog4cxx10-dev
+
+	Build the workspace:
+
+		./src/catkin/bin/catkin_make_isolated --install
+
+	This is going to take around 2 hours. Finally:
+
+		source ~/ros_catkin_ws/install_isolated/setup.bash
+
+	And enter via SSH:
+
+		export LC_ALL=C
+
+	This line should be added to the .bashrc file, to be executed by default in all terminals (I could avoid this fix, after installing a ton of senseless packages and messing around, impossible to say how now, though I think that maybe it was updating the build tools, gcc, and the like)
+
+	The end of my .bashrc looks like (my workspace is ~/workspace/catkin, see the ros wiki tutorials):
+
+		# ROS stuff
+		export LC_ALL=C
+		export ROS_HOSTNAME=arm
+		export ROS_MASTER_URI=http://arm:11311
+		source ~/ros_catkin_ws/install_isolated/setup.bash
+		source ~/workspace/catkin/devel/setup.bash
+		source ~/workspace/catkin/install/setup.bash
+
+9.- Test it
+
+	On the BBB, try:
+
+		roscore
+
+10.- Other problems I had
+
+	* DNS Issues (wifi adapater works fine but system cannot resolve for ip addresses), just do:
+
+		sudo rm /etc/resolv.conf
+		sudo dpkg-reconfigure resolvconf
+
+	My resolv.conf looks like:
+
+		# Dynamic resolv.conf(5) file for glibc resolver(3) generated by resolvconf(8)
+		# DO NOT EDIT THIS FILE BY HAND -- YOUR CHANGES WILL BE OVERWRITTEN
+		nameserver 1.1.1.1
+		domain localdomain
+		search localdomain
+		nameserver 192.168.1.1
+
+	The problem seems to be the first nameserver line. The ip above should be different for you, and you could simply add the google DNS addresses (8.8.8.8 and 8.8.4.4).
+
+	Then reboot.
+
+	See:
+	http://askubuntu.com/questions/142327/can-not-access-internet-dns-names-do-not-resolve-after-update-today
+	http://askubuntu.com/questions/292622/cannot-resolve-dns-on-12-10-install
+
+	* The icon theme on the VNC session with LXDE seems missing:
+
+	No idea why, share if you know any fix. Maybe install Lubuntu, seems to work fine with VNC.
+
+	* roscore fails to start, cannot ping ubuntu
+
+	Seems that a dirty fix is to simply add:
+
+		192.168.7.2		ubuntu
+
+	To /etc/hosts hosts list (with sudo nano ...). I don't really know what's going on, if you have this problem and you know a better fix, please share.
+
+	My hosts file on the BBB looks like:
+
+		127.0.0.1 localhost
+		127.0.1.1 arm
+		192.168.7.2 ubuntu
+		
+	Alternatively, change ubuntu to localhost on the bashrc file, making it:
+	
+		# ROS stuff
+		export LC_ALL=C
+		export ROS_HOSTNAME=localhost
+		export ROS_MASTER_URI=http://localhost:11311
+		source ~/ros_catkin_ws/install_isolated/setup.bash
+		source ~/workspace/catkin/devel/setup.bash
+		source ~/workspace/catkin/install/setup.bash
+
+	* SSH is rejected
+
+	Don't know why, sometimes all I need is to reboot, another time I just redid the steps for configuring SSH.
+
+	* Cannot recognize USB device (fails to power)
+
+	Seems like a driver/hardware bug, reboot.
+
+11.- Compiling and installing open-cv
+
+	Modified from: http://mitchtech.net/raspberry-pi-opencv/
+
+	Position yourself in a workspace folder (if you wish), then:
+
+		wget http://sourceforge.net/projects/opencvlibrary/files/opencv-unix/2.4.3/OpenCV-2.4.3.tar.bz2
+		tar -xvf OpenCV-2.4.3.tar.bz2
+		sudo apt-get update
+		sudo apt-get -y install build-essential cmake cmake-qt-gui pkg-config libpng12-0 libpng12-dev libpng++-dev libpng3 libpnglite-dev zlib1g-dbg zlib1g zlib1g-dev pngtools libtiff4-dev libtiff4 libtiffxx0c2 libtiff-tools
+		sudo apt-get -y install libjpeg8 libjpeg8-dev libjpeg8-dbg libjpeg-progs ffmpeg libavcodec-dev libavcodec53 libavformat53 libavformat-dev libgstreamer0.10-0-dbg libgstreamer0.10-0 libgstreamer0.10-dev libxine1-ffmpeg libxine-dev libxine1-bin libunicap2 libunicap2-dev libdc1394-22-dev libdc1394-22 libdc1394-utils swig libv4l-0 libv4l-dev python-numpy libpython2.7 python-dev python2.7-dev libgtk2.0-dev pkg-config
+		sudo reboot
+		
+		After reboot, navigate to the folder where opencd was extracted:
+		
+		cd OpenCV-2.4.3
+		mkdir build
+		cd build
+		cmake -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX=/usr/local -D BUILD_PYTHON_SUPPORT=ON -D BUILD_EXAMPLES=ON ..
+
+	Compiling and installing will take a LONG time (+5 hours):
+
+		make
+		sudo make install
+
+	Configure with:
+
+		sudo nano /etc/ld.so.conf.d/opencv.conf
+
+	And add the line at the end of file:
+
+		/usr/local/lib
+
+	Then:
+
+		sudo nano /etc/bash.bashrc
+
+	And add at the end of file:
+
+		export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig
+
+	Reboot, and finally:
+
+		sudo apt-get upgrade
+		
+12.- Install camera support
+
+		http://ubuntuforums.org/showthread.php?t=1595675
+		http://www.linuxquestions.org/questions/ubuntu-63/gtk-warning-cannot-open-display-859640/
+		
+		To use the GUI with opencv, add:
+		
+			export DISPLAY=:1
+		
+12.- Install or update pySerial
+
+		cd ~/workspace
+		wget https://pypi.python.org/packages/source/p/pyserial/pyserial-2.6.tar.gz#md5=cde799970b7c1ce1f7d6e9ceebe64c98
+		tar -xvf pyserial-2.6.tar.gz 
+		cd pyserial-2.6
+		sudo python setup.py install
+		
+13.- Install rosserial
+
+		cd ~/workspace/catkin/src
+		git clone https://github.com/ros-drivers/rosserial
+		cd ..
+		catkin_make
+		catkin_make install
+		source ~/.bashrc
+		
+x14.- Install node.js
+
+		cd ~/develop
+		wget http://nodejs.org/dist/v0.10.15/node-v0.10.15.tar.gz
+		tar -xvf node-v0.10.15.tar.gz
+		cd node-v0.10.15
+		./configure
+		make
+		
+		Maybe?:
+		
+		make install
+		
+x15.- Install bonescript?
+
+		https://github.com/jadonk/bonescript
+		
+16.- GPIO?
+
+		sudo ntpdate pool.ntp.org
+		sudo apt-get update
+		sudo apt-get install build-essential python-dev python-pip -y
+		sudo easy_install -U distribute
+		sudo pip install Adafruit_BBIO
+
+EXTRA.- Make a backup image of your sd card
+
+	Just in case something goes terribly wrong and you need to restore the sd card to a previously working state. See
+	http://askubuntu.com/questions/299081/how-do-i-create-a-backup-image-of-an-sd-card
+	
+	sudo umount /media/oneiric
+	sudo dd if=/dev/sdXX of=~/sd-card-copy.img
+
+	http://askubuntu.com/questions/119211/how-to-write-image-to-sd-card
+	
+	sudo dd if=sdcard.img of=/dev/sdb
+
+	Make the block size 4M (sudo dd bs=4M if=...)
+		
+SHAR INTERNET CONNECTION VIA SSH/USB
+COMPILE OPENCV
+CREAT BLOG AND UPLOAD
+UPDATE SERVO INFO
+TEST ROSSERIAL ARDUINO BBB pyserial?
+FIX ICON THEME lubuntu?
+MAKE NEW PCB AND RESEND OLD ONE
+EXPLAIN BASH
+PORYECTOS ECLIPSE
